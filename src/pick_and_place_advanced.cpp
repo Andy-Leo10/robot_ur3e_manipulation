@@ -331,6 +331,8 @@ int main(int argc, char **argv) {
     rclcpp::sleep_for(std::chrono::seconds(2));
 
     robotArm.cmd_arm("home");
+    float cube_pos_x_ = 0.5;
+    float cube_pos_y_ = 0.5;
     // read the atributte 'is_robot_sim' of the object
     if(robotArm.get_is_robot_sim()) {
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is simulated \n\n\n");
