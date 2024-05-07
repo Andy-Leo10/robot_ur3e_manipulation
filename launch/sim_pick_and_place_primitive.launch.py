@@ -8,7 +8,7 @@ from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
-    moveit_config = MoveItConfigsBuilder("my").to_moveit_configs()
+    moveit_config = MoveItConfigsBuilder("name", package_name="sim_moveit_config").to_moveit_configs()
 
     # Declare the launch argument
     use_sim_time_arg = DeclareLaunchArgument('use_sim_time',default_value='True',
@@ -20,7 +20,7 @@ def generate_launch_description():
     moveit_cpp_node = Node(
         name="pick_and_place",
         package="robot_ur3e_manipulation",
-        executable="pick_and_place_advanced",
+        executable="pick_and_place_primitive",
         output="screen",
         parameters=[
             moveit_config.robot_description,
