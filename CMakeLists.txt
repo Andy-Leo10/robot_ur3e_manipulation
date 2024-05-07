@@ -77,6 +77,7 @@ set_my_target_deps(pick_and_place_advanced)
 # install executables
 install(TARGETS
   pick_and_place_primitive
+  pick_and_place_advanced
   DESTINATION lib/${PROJECT_NAME}
 )
 
