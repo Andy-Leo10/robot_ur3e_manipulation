@@ -74,10 +74,14 @@ add_executable(pick_and_place_advanced src/pick_and_place_advanced.cpp)
 # Use the function to set dependencies for your target
 set_my_target_deps(pick_and_place_advanced)
 
+add_executable(scene_objects src/scene_objects.cpp)
+set_my_target_deps(scene_objects)
+
 # install executables
 install(TARGETS
   pick_and_place_primitive
   pick_and_place_advanced
+  scene_objects
   DESTINATION lib/${PROJECT_NAME}
 )
 

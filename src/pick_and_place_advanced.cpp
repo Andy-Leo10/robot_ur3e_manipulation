@@ -309,30 +309,42 @@ int main(int argc, char **argv) {
     moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
     // Create vector to hold collision objects.
     std::vector<moveit_msgs::msg::CollisionObject> collision_objects;
-    // create the table
-    auto table_object = robotArm.createCollisionObject(
-        "table", 
-        "base_link",
-        robotArm.createSolidPrimitiveBOX(1.5, 0.75, 0.02),
-        robotArm.createPose(1.5/2, 0.75/2, -0.02/2, 1.0)
-    );
+
+
     // create the wall
     auto wall_object = robotArm.createCollisionObject(
         "wall", 
         "base_link",
-        robotArm.createSolidPrimitiveBOX(2.0, 0.02, 1.0),
-        robotArm.createPose(1.5/2, 0.5+0.02/2, 1.0/2, 1.0)
+        robotArm.createSolidPrimitiveBOX(2.0, 0.1, 2.0),
+        robotArm.createPose(-0.25,-0.4,0, 1.0)
     );
+    // create the table
+    auto table_object = robotArm.createCollisionObject(
+        "table", 
+        "base_link",
+        robotArm.createSolidPrimitiveBOX(0.85,1.8,1.0),
+        robotArm.createPose(0.3,0.35,-0.501, 1.0)
+    );
+    // create machine
+    auto machine_object = robotArm.createCollisionObject(
+        "machine", 
+        "base_link",
+        robotArm.createSolidPrimitiveBOX(0.6,0.15,0.4),
+        robotArm.createPose(0.2,0.85,0.2, 1.0)
+    );
+
+
     // push the objects into the vector
-    collision_objects.push_back(table_object);
     collision_objects.push_back(wall_object);
+    collision_objects.push_back(table_object);
+    collision_objects.push_back(machine_object);
     planning_scene_interface.addCollisionObjects(collision_objects);
     // Wait for MoveGroup to recieve and process the collision object message.
     rclcpp::sleep_for(std::chrono::seconds(2));
 
     robotArm.cmd_arm("home");
-    float cube_pos_x_ = 0.2;
-    float cube_pos_y_ = -0.34;
+    float cube_pos_x_ = 0.26;
+    float cube_pos_y_ = 0.38;
     // read the atributte 'is_robot_sim' of the object
     if(robotArm.get_is_robot_sim()) {
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is simulated \n\n\n");
