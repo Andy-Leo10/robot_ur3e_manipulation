@@ -382,58 +382,59 @@ public:
 
     void move2pos(double absolute_coord, const std::string& axis) {
         RCLCPP_INFO(LOGGER, "---------------------------MOVE 2 POS %s!----------------------------------", axis.c_str());
-
-        std::vector<geometry_msgs::msg::Pose> waypoints;
-        // obtain the current position of the end effector
-        geometry_msgs::msg::PoseStamped current_pose = move_group_arm->getCurrentPose();
-        geometry_msgs::msg::Pose target_pose = move_group_arm->getCurrentPose().pose;
-
-        // calculate the difference depending on the axis
-        double difference = 0.0;
-        if(axis == "x") {
-            difference = absolute_coord - current_pose.pose.position.x;
-        } else if(axis == "y") {
-            difference = absolute_coord - current_pose.pose.position.y;
-        } else if(axis == "z") {
-            difference = absolute_coord - current_pose.pose.position.z;
-        } else {
-            RCLCPP_ERROR(LOGGER, "Invalid axis!");
-        }
-
-        // set the step size
-        double step_size = 0.01;
-        // calculate the number of steps
-        int num_steps = std::abs(difference / step_size);
-
-        // move the end effector to the target position in steps
-        for (int i = 0; i < num_steps; ++i) {
-            if (axis == "x") {
-                target_pose.position.x += difference > 0 ? step_size : -step_size;
-            } 
-            else if (axis == "y") {
-                target_pose.position.y += difference > 0 ? step_size : -step_size;
-            } 
-            else if (axis == "z") {
-                target_pose.position.z += difference > 0 ? step_size : -step_size;
-            } 
-            else {
-                RCLCPP_ERROR(LOGGER, "Invalid axis: %s", axis.c_str());
-                return;
-            }
-            waypoints.push_back(target_pose);
-        }
-
-        moveit_msgs::msg::RobotTrajectory trajectory;
+    
         const double jump_threshold = 0.0;
         const double eef_step = 0.01;
+        double step_size = 0.01;
+        double fraction = 0.0;
+    
+        do {
+            std::vector<geometry_msgs::msg::Pose> waypoints;
+            geometry_msgs::msg::PoseStamped current_pose = move_group_arm->getCurrentPose();
+            geometry_msgs::msg::Pose target_pose = current_pose.pose;
+    
+            double difference = 0.0;
+            if(axis == "x") {
+                difference = absolute_coord - current_pose.pose.position.x;
+            } else if(axis == "y") {
+                difference = absolute_coord - current_pose.pose.position.y;
+            } else if(axis == "z") {
+                difference = absolute_coord - current_pose.pose.position.z;
+            } else {
+                RCLCPP_ERROR(LOGGER, "Invalid axis!");
+                return;
+            }
+    
+            int num_steps = std::abs(difference / step_size);
+    
+            for (int i = 0; i < num_steps; ++i) {
+                if (axis == "x") {
+                    target_pose.position.x += difference > 0 ? step_size : -step_size;
+                } 
+                else if (axis == "y") {
+                    target_pose.position.y += difference > 0 ? step_size : -step_size;
+                } 
+                else if (axis == "z") {
+                    target_pose.position.z += difference > 0 ? step_size : -step_size;
+                } 
+                else {
+                    RCLCPP_ERROR(LOGGER, "Invalid axis: %s", axis.c_str());
+                    return;
+                }
+                waypoints.push_back(target_pose);
+            }
 
-        double fraction = move_group_arm->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
-
-        if(fraction >= 0.0) {
-            move_group_arm->execute(trajectory);
-        } else {
-            RCLCPP_ERROR(LOGGER, "Waypoint movement plan failed!");
-        }
+            moveit_msgs::msg::RobotTrajectory trajectory;
+            fraction = move_group_arm->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+    
+            if(fraction >= 0.0) {
+                move_group_arm->execute(trajectory);
+                // Add a delay here to ensure the robot has enough time to finish executing the trajectory
+                rclcpp::sleep_for(std::chrono::seconds(1));
+            } else {
+                RCLCPP_ERROR(LOGGER, "Waypoint movement plan failed!");
+            }
+        } while (fraction < 1.0);
     }
 
 private:
@@ -497,25 +498,25 @@ int main(int argc, char **argv) {
     if(robotArm.get_is_robot_sim()) {
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is simulated \n\n\n");
         // robotArm.move_end_effector(cube_pos_x_, cube_pos_y_, 0.35, -180.0, 0.0, 0.0);
-        robotArm.print_end_effector_position();
-        // robotArm.orientation_end_effector(-180.0, 0.0, 0.0);
         robotArm.move2pos(0.35, "z");
-        robotArm.move2pos(cube_pos_x_, "x");
-        robotArm.move2pos(cube_pos_y_, "y");
+        robotArm.move2pos(0.310, "x");
+        robotArm.move2pos(0.340, "y");
         robotArm.cmd_gripper("gripper_open");
         robotArm.print_end_effector_position();
         
-        robotArm.move_waypoint(-0.05, "z");
-        robotArm.cmd_gripper("gripper_close");
+        robotArm.move2pos(0.30, "z");
+        //robotArm.cmd_gripper("gripper_close");
+        robotArm.move_gripper_space(-0.17);
         //robotArm.move_gripper_space(0.69);
-        robotArm.move2pos(0.20, "z");
+        robotArm.move2pos(0.35, "z");
         // robotArm.move_waypoint(0.10, "z");
-        robotArm.move_single_joint("shoulder_pan_joint", 180.0);
+        robotArm.move_single_joint("shoulder_pan_joint", 135.0);
 
         // robotArm.move_end_effector(-0.5, -0.02, -0.15, -180.0, 0.0, 0.0);
-        robotArm.move2pos(-0.5, "x");
         robotArm.move2pos(-0.02, "y");
         robotArm.move2pos(-0.15, "z");
+        robotArm.move2pos(-0.5, "x");
+        
         robotArm.print_end_effector_position();
         robotArm.cmd_gripper("gripper_open");
     } 
