@@ -19,6 +19,7 @@ find_package(moveit_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(grasping_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 # Define a function to set target dependencies
 function(set_my_target_deps target)
@@ -35,6 +36,7 @@ function(set_my_target_deps target)
     tf2
     tf2_geometry_msgs
     grasping_msgs
+	std_msgs
   )
 endfunction()
 

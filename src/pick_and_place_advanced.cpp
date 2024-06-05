@@ -7,6 +7,9 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
+#include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/string.hpp> //for debugging with another topic
+
 static const rclcpp::Logger LOGGER = rclcpp::get_logger("move_group_demo");
 static const std::string PLANNING_GROUP_ARM = "ur_manipulator";
 static const std::string PLANNING_GROUP_GRIPPER = "gripper";
@@ -19,6 +22,7 @@ public:
         move_group_node = rclcpp::Node::make_shared("move_group_interface_tutorial", node_options);
 
         executor.add_node(move_group_node);
+        executor.add_node(node_);
         std::thread([this]() { this->executor.spin(); }).detach();
 
         move_group_arm = std::make_shared<moveit::planning_interface::MoveGroupInterface>(move_group_node, PLANNING_GROUP_ARM);
@@ -27,12 +31,32 @@ public:
         move_group_gripper = std::make_shared<moveit::planning_interface::MoveGroupInterface>(move_group_node, PLANNING_GROUP_GRIPPER);
         joint_model_group_gripper = move_group_gripper->getCurrentState()->getJointModelGroup(PLANNING_GROUP_GRIPPER);
         
+        // create a subscriber to the topic: /cup_abs_position :which has Point info
+        sub_cup_abs_position = node_->create_subscription<geometry_msgs::msg::Point>(
+            "/cup_abs_position", 10, std::bind(&RobotArm::clbk_cup_abs_position, this, std::placeholders::_1)
+        );
+
+
         node_->declare_parameter<bool>("is_robot_sim", false);
         RCLCPP_INFO(LOGGER, "---------------------------INSTANTIATED!----------------------------------");
     }
 
     bool get_is_robot_sim() {
         return node_->get_parameter("is_robot_sim").as_bool();
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~CUP POSITION~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    void clbk_cup_abs_position(const geometry_msgs::msg::Point::SharedPtr msg) {
+        //RCLCPP_INFO(LOGGER, "I heard: 'Cup position: (%f, %f, %f)'", msg->x, msg->y, msg->z);
+        cube_pos_x_ = msg->x;
+        cube_pos_y_ = msg->y;
+        cube_pos_z_ = msg->z;
+    }
+
+    // tuple for getting the cup position
+    std::tuple<float, float, float> get_cup_position() {
+        return std::make_tuple(cube_pos_x_, cube_pos_y_, cube_pos_z_);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SCENE OBJECTs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -443,9 +467,14 @@ private:
     const moveit::core::JointModelGroup* joint_model_group_arm;
     std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group_gripper;
     const moveit::core::JointModelGroup* joint_model_group_gripper;
-    rclcpp::executors::SingleThreadedExecutor executor;
+    rclcpp::executors::MultiThreadedExecutor executor;
     bool is_robot_sim;
     rclcpp::Node::SharedPtr node_;
+    // for cup position
+    rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr sub_cup_abs_position;
+    float cube_pos_x_;
+    float cube_pos_y_;
+    float cube_pos_z_;
 };
 
 int main(int argc, char **argv) {
@@ -492,33 +521,28 @@ int main(int argc, char **argv) {
     rclcpp::sleep_for(std::chrono::seconds(2));
 
     robotArm.cmd_arm("crab");
-    float cube_pos_x_ = 0.310;
-    float cube_pos_y_ = 0.340;
-    // read the atributte 'is_robot_sim' of the object
+    // get the cup position
+    float cube_pos_x_, cube_pos_y_, cube_pos_z_;
+    std::tie(cube_pos_x_, cube_pos_y_, cube_pos_z_) = robotArm.get_cup_position();
+
     if(robotArm.get_is_robot_sim()) {
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is simulated \n\n\n");
-        // robotArm.move_end_effector(cube_pos_x_, cube_pos_y_, 0.35, -180.0, 0.0, 0.0);
         robotArm.move2pos(0.35, "z");
-        robotArm.move2pos(0.310, "x");
-        robotArm.move2pos(0.340, "y");
+        robotArm.move2pos(0.31, "x");
+        robotArm.move2pos(0.34, "y");
         robotArm.cmd_gripper("gripper_open");
         robotArm.print_end_effector_position();
         
-        robotArm.move2pos(0.30, "z");
-        //robotArm.cmd_gripper("gripper_close");
+        robotArm.move2pos(0.26, "z");
         robotArm.move_gripper_space(-0.17);
-        //robotArm.move_gripper_space(0.69);
         robotArm.move2pos(0.35, "z");
-        // robotArm.move_waypoint(0.10, "z");
         robotArm.move_single_joint("shoulder_pan_joint", 135.0);
 
-        // robotArm.move_end_effector(-0.5, -0.02, -0.15, -180.0, 0.0, 0.0);
-        robotArm.move2pos(-0.02, "y");
-        robotArm.move2pos(-0.15, "z");
-        robotArm.move2pos(-0.5, "x");
-        
-        robotArm.print_end_effector_position();
+        robotArm.move2pos(cube_pos_y_, "y");
+        robotArm.move2pos(cube_pos_z_+0.33, "z");
+        robotArm.move2pos(cube_pos_x_, "x");
         robotArm.cmd_gripper("gripper_open");
+        robotArm.print_end_effector_position();
     } 
     else {
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is real \n\n\n");
