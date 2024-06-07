@@ -8,7 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_action REQUIRED) #for action
 find_package(moveit_core REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
@@ -19,7 +19,13 @@ find_package(moveit_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(grasping_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(std_msgs REQUIRED) #for testing topics
+#action
+find_package(rosidl_default_generators REQUIRED)
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/DeliverCoffeeAction.action"
+  DEPENDENCIES std_msgs
+)
 
 # Define a function to set target dependencies
 function(set_my_target_deps target)
@@ -37,6 +43,25 @@ function(set_my_target_deps target)
     tf2_geometry_msgs
     grasping_msgs
 	std_msgs
+  )
+endfunction()
+# Define a function to set target dependencies with Action
+function(set_my_target_deps_action target)
+  ament_target_dependencies(${target}
+    rclcpp
+    rclcpp_action
+    moveit_core
+    moveit_ros_planning
+    moveit_ros_planning_interface
+    interactive_markers
+    geometric_shapes
+    control_msgs
+    moveit_msgs
+    tf2
+    tf2_geometry_msgs
+    grasping_msgs
+	std_msgs
+	rclcpp_action
   )
 endfunction()
 
@@ -59,31 +84,23 @@ ament_target_dependencies(pick_and_place_primitive
 
 # generate executable for pick_and_place_advanced
 add_executable(pick_and_place_advanced src/pick_and_place_advanced.cpp)
-# ament_target_dependencies(pick_and_place_advanced
-#   rclcpp
-#   rclcpp_action
-#   moveit_core
-#   moveit_ros_planning
-#   moveit_ros_planning_interface
-#   interactive_markers
-#   geometric_shapes
-#   control_msgs
-#   moveit_msgs
-#   tf2
-#   tf2_geometry_msgs
-#   grasping_msgs
-# )
 # Use the function to set dependencies for your target
 set_my_target_deps(pick_and_place_advanced)
 
 add_executable(scene_objects src/scene_objects.cpp)
 set_my_target_deps(scene_objects)
 
+# generate executable for action server
+add_executable(action_server src/action_server.cpp)
+set_my_target_deps(action_server)
+rosidl_target_interfaces(action_server ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 # install executables
 install(TARGETS
   pick_and_place_primitive
   pick_and_place_advanced
   scene_objects
+  action_server
   DESTINATION lib/${PROJECT_NAME}
 )
 
