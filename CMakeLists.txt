@@ -20,10 +20,11 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(grasping_msgs REQUIRED)
 find_package(std_msgs REQUIRED) #for testing topics
-#action
+#action and service
 find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/DeliverCoffeeAction.action"
+  "srv/DeliverCoffeeService.srv"
   DEPENDENCIES std_msgs
 )
 
@@ -95,12 +96,18 @@ add_executable(action_server src/action_server.cpp)
 set_my_target_deps(action_server)
 rosidl_target_interfaces(action_server ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
+# generate executable for service server
+add_executable(service_server src/service_server.cpp)
+set_my_target_deps(service_server)
+rosidl_target_interfaces(service_server ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 # install executables
 install(TARGETS
   pick_and_place_primitive
   pick_and_place_advanced
   scene_objects
   action_server
+  service_server
   DESTINATION lib/${PROJECT_NAME}
 )
 

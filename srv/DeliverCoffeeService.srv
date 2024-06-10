@@ -1,0 +1,5 @@
+# goal definition
+bool coffe_order
+---
+# result definition
+bool order_success
