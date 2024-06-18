@@ -118,14 +118,14 @@ public:
 
     void execute(const std::shared_ptr<GoalHandleCoffee> goal_handle) {
         RCLCPP_INFO(ACTION, "COFFEE - Executing goal");
+        move_gripper_space(-0.17);
         auto feedback = std::make_shared<CoffeeAction::Feedback>();
         auto result = std::make_shared<CoffeeAction::Result>();
 
         feedback->order_status = "COFFEE -> STAGE 1!"; goal_handle->publish_feedback(feedback);
         feedback->order_status = "COFFEE -> Moving to crab position"; goal_handle->publish_feedback(feedback);
-        cmd_arm("crab");
-        feedback->order_status = "COFFEE -> Moving to z=0.35"; goal_handle->publish_feedback(feedback);
-        move2pos(0.35, "z");
+        cmd_arm("crab_pose");
+        // move_joint_space(-0.000045, -2.144726, 1.697500, -1.123655, -1.570612, -1.570653);
         feedback->order_status = "COFFEE -> Moving to x=0.31"; goal_handle->publish_feedback(feedback);
         move2pos(0.31, "x");
         feedback->order_status = "COFFEE -> Moving to y=0.34"; goal_handle->publish_feedback(feedback);
@@ -169,6 +169,32 @@ public:
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~JOINTs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    void move_joint_space(float angle_0, float angle_1, float angle_2, float angle_3, float angle_4, float angle_5) {
+        RCLCPP_INFO(LOGGER, "---------------------------MOVE JOINT STATE!----------------------------------");
+        moveit::core::RobotStatePtr current_state = move_group_arm->getCurrentState(10);
+
+        std::vector<double> joint_group_positions;
+        current_state->copyJointGroupPositions(joint_model_group_arm, joint_group_positions);
+
+        joint_group_positions[0] = angle_0; // Shoulder Pan
+        joint_group_positions[1] = angle_1; // Shoulder Lift
+        joint_group_positions[2] = angle_2; // Elbow
+        joint_group_positions[3] = angle_3; // Wrist 1
+        joint_group_positions[4] = angle_4; // Wrist 2
+        joint_group_positions[5] = angle_5; // Wrist 3
+
+        move_group_arm->setJointValueTarget(joint_group_positions);
+
+        moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+
+        bool success = (move_group_arm->plan(my_plan) == moveit::core::MoveItErrorCode::SUCCESS);
+        if(success) {
+            move_group_arm->execute(my_plan);
+        } else {
+            RCLCPP_ERROR(LOGGER, "Joint space movement plan failed!");
+        }
+    }
 
     void move_single_joint(const std::string& joint_name, double degree) {
         RCLCPP_INFO(LOGGER, "---------------------------MOVE JOINT %s!----------------------------------", joint_name.c_str());
@@ -243,6 +269,9 @@ public:
         RCLCPP_INFO(LOGGER, target_name.c_str());
 
         move_group_arm->setNamedTarget(target_name);
+
+        // Set a longer execution timeout (e.g., 30 seconds)
+        move_group_gripper->setGoalTolerance(30.0);
 
         moveit::planning_interface::MoveGroupInterface::Plan my_plan_arm;
         bool success_arm = (move_group_arm->plan(my_plan_arm) == moveit::core::MoveItErrorCode::SUCCESS);

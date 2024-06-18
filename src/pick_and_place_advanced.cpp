@@ -520,14 +520,18 @@ int main(int argc, char **argv) {
     // Wait for MoveGroup to recieve and process the collision object message.
     rclcpp::sleep_for(std::chrono::seconds(2));
 
-    robotArm.cmd_arm("crab");
     // get the cup position
     float cube_pos_x_, cube_pos_y_, cube_pos_z_;
     std::tie(cube_pos_x_, cube_pos_y_, cube_pos_z_) = robotArm.get_cup_position();
 
     if(robotArm.get_is_robot_sim()) {
+        robotArm.move_gripper_space(-0.17);
+        // robotArm.cmd_arm("crab_pose");
+        robotArm.move_joint_space(-0.000045, -2.144726, 1.697500, -1.123655, -1.570612, -1.570653);
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is simulated \n\n\n");
-        robotArm.move2pos(0.35, "z");
+        // robotArm.move2pos(0.35, "z");
+        // robotArm.move2pos(0.15, "x");//delete me
+        
         robotArm.move2pos(0.31, "x");
         robotArm.move2pos(0.34, "y");
         robotArm.cmd_gripper("gripper_open");
@@ -543,23 +547,38 @@ int main(int argc, char **argv) {
         robotArm.move2pos(cube_pos_x_, "x");
         robotArm.cmd_gripper("gripper_open");
         robotArm.print_end_effector_position();
+        robotArm.cmd_arm("home");
     } 
     else {
+        robotArm.move_gripper_space(-0.17);
+        // robotArm.cmd_arm("crab");
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is real \n\n\n");
-        robotArm.move_end_effector(cube_pos_x_, cube_pos_y_, 0.25, -180.0, 0.0, 0.0);
-        robotArm.cmd_gripper("gripper_open");
         robotArm.print_end_effector_position();
-        
-        robotArm.move_waypoint(-0.08, "z");
-        //robotArm.cmd_gripper("gripper_close");
-        robotArm.move_gripper_space(0.69);
-
-        robotArm.move_waypoint(0.10, "z");
-
-        robotArm.move_joint_space(6.1, -1.64, -1.59, -1.47, 1.56, -5.70);
-        robotArm.cmd_gripper("gripper_open");
+        robotArm.move2pos(0.35, "z");
+        robotArm.move2pos(0.15, "x");//delete me
+        //robotArm.move2pos(0.31, "x");
+        //robotArm.move2pos(0.34, "y");
+        //robotArm.cmd_gripper("gripper_open");
+        //robotArm.print_end_effector_position();
+//
+        //robotArm.move2pos(0.28, "z");
+        //robotArm.move2pos(0.21, "x");
+        //robotArm.move_gripper_space(0.0);
+        //robotArm.move2pos(0.35, "z");
+        //robotArm.move2pos(0.30, "z");//delete me
+        //robotArm.cmd_gripper("gripper_open");//delete me
+        //robotArm.move_single_joint("shoulder_pan_joint", 135.0);
+//
+        //cube_pos_x_=-0.5;
+        //cube_pos_y_=-0.01;
+        //cube_pos_z_=-0.17;
+        //robotArm.move2pos(cube_pos_y_, "y");
+        //robotArm.move2pos(cube_pos_z_+0.33, "z");
+        //robotArm.move2pos(cube_pos_x_, "x");
+        //robotArm.cmd_gripper("gripper_open");
+        //robotArm.print_end_effector_position();
+        //robotArm.cmd_arm("home");
     }
-    robotArm.cmd_arm("home");
 
     rclcpp::shutdown();
     return 0;
