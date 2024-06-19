@@ -550,34 +550,34 @@ int main(int argc, char **argv) {
         robotArm.cmd_arm("home");
     } 
     else {
-        robotArm.move_gripper_space(-0.17);
-        // robotArm.cmd_arm("crab");
+        robotArm.move_gripper_space(0.0);
+        robotArm.cmd_arm("crab_pose");
         RCLCPP_INFO(LOGGER, "\n\n\n Robot is real \n\n\n");
         robotArm.print_end_effector_position();
-        robotArm.move2pos(0.35, "z");
-        robotArm.move2pos(0.15, "x");//delete me
+        // robotArm.move2pos(0.35, "z");
         //robotArm.move2pos(0.31, "x");
-        //robotArm.move2pos(0.34, "y");
-        //robotArm.cmd_gripper("gripper_open");
-        //robotArm.print_end_effector_position();
-//
-        //robotArm.move2pos(0.28, "z");
-        //robotArm.move2pos(0.21, "x");
-        //robotArm.move_gripper_space(0.0);
-        //robotArm.move2pos(0.35, "z");
+        robotArm.move2pos(0.21, "x");
+        robotArm.move2pos(0.34, "y");
+        robotArm.cmd_gripper("gripper_open");
+        robotArm.print_end_effector_position();
+
+        robotArm.move2pos(0.28, "z");
+        // robotArm.move2pos(0.21, "x");
+        robotArm.move_gripper_space(0.0);
+        robotArm.move2pos(0.35, "z");
         //robotArm.move2pos(0.30, "z");//delete me
         //robotArm.cmd_gripper("gripper_open");//delete me
-        //robotArm.move_single_joint("shoulder_pan_joint", 135.0);
-//
-        //cube_pos_x_=-0.5;
-        //cube_pos_y_=-0.01;
-        //cube_pos_z_=-0.17;
-        //robotArm.move2pos(cube_pos_y_, "y");
-        //robotArm.move2pos(cube_pos_z_+0.33, "z");
-        //robotArm.move2pos(cube_pos_x_, "x");
-        //robotArm.cmd_gripper("gripper_open");
-        //robotArm.print_end_effector_position();
-        //robotArm.cmd_arm("home");
+        robotArm.move_single_joint("shoulder_pan_joint", 135.0);
+
+        cube_pos_x_=-0.5;
+        cube_pos_y_=-0.01;
+        cube_pos_z_=-0.17;
+        robotArm.move2pos(cube_pos_y_, "y");
+        robotArm.move2pos(cube_pos_z_+0.33, "z");
+        robotArm.move2pos(cube_pos_x_, "x");
+        robotArm.cmd_gripper("gripper_open");
+        robotArm.print_end_effector_position();
+        robotArm.cmd_arm("home");
     }
 
     rclcpp::shutdown();
