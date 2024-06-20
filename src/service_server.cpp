@@ -57,6 +57,7 @@ public:
 
         node_->declare_parameter<bool>("is_robot_sim", false);
         RCLCPP_INFO(LOGGER, "---------------------------INSTANTIATED!----------------------------------");
+        start_moveit_scene();
     }
     
     ~RobotArm() {
@@ -71,6 +72,94 @@ public:
         return node_->get_parameter("is_robot_sim").as_bool();
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SCENE OBJECTs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    void start_moveit_scene() {
+        RCLCPP_INFO(LOGGER, "---------------------------STARTing SCENE!----------------------------------");
+        moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+        // Clear the scene
+        std::vector<std::string> object_ids = {"wall", "table", "machine"};
+        planning_scene_interface.removeCollisionObjects(object_ids);
+        rclcpp::sleep_for(std::chrono::milliseconds(500));
+        // Create vector to hold collision objects.
+        std::vector<moveit_msgs::msg::CollisionObject> collision_objects;
+    
+        
+        // create the wall
+        auto wall_object = createCollisionObject(
+            "wall", 
+            "base_link",
+            createSolidPrimitiveBOX(2.0, 0.1, 2.0),
+            createPose(-0.25,-0.4,0, 1.0)
+        );
+        // create the table
+        auto table_object = createCollisionObject(
+            "table", 
+            "base_link",
+            createSolidPrimitiveBOX(0.85,1.8,1.0),
+            createPose(0.3,0.35,-0.501, 1.0)
+        );
+        // create machine
+        auto machine_object = createCollisionObject(
+            "machine", 
+            "base_link",
+            createSolidPrimitiveBOX(0.6,0.15,0.4),
+            createPose(0.2,0.85,0.2, 1.0)
+        );
+
+
+        // push the objects into the vector
+        collision_objects.push_back(wall_object);
+        collision_objects.push_back(table_object);
+        collision_objects.push_back(machine_object);
+        planning_scene_interface.addCollisionObjects(collision_objects);
+        // Wait for MoveGroup to recieve and process the collision object message.
+        rclcpp::sleep_for(std::chrono::seconds(1));
+    }
+
+    moveit_msgs::msg::CollisionObject createCollisionObject(
+        const std::string& id, 
+        const std::string& frame_id, 
+        const shape_msgs::msg::SolidPrimitive& primitive, 
+        const geometry_msgs::msg::Pose& pose) 
+    {
+        moveit_msgs::msg::CollisionObject collision_object;
+        collision_object.header.frame_id = frame_id;
+        collision_object.id = id;
+
+        collision_object.primitives.push_back(primitive);
+        collision_object.primitive_poses.push_back(pose);
+        collision_object.operation = collision_object.ADD;
+
+        RCLCPP_INFO(LOGGER, "Added an object into the world");
+        return collision_object;
+    }
+
+    shape_msgs::msg::SolidPrimitive createSolidPrimitiveBOX(double x, double y, double z) {
+        shape_msgs::msg::SolidPrimitive box;
+        box.type = shape_msgs::msg::SolidPrimitive::BOX;
+        box.dimensions.resize(3);
+        box.dimensions[0] = x; // x dimension
+        box.dimensions[1] = y; // y dimension
+        box.dimensions[2] = z; // z dimension
+        return box;
+    }
+
+    geometry_msgs::msg::Pose createPose(double x, double y, double z, double w) {
+        geometry_msgs::msg::Pose pose;
+        pose.orientation.w = w;
+        pose.position.x = x;
+        pose.position.y = y;
+        pose.position.z = z;
+        return pose;
+    }
+
+    void removeCollisionObjects(const std::vector<std::string>& object_ids) {
+        moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+        planning_scene_interface.removeCollisionObjects(object_ids);
+        RCLCPP_INFO(LOGGER, "Removed specified objects from the scene.");
+    }
+    
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~CUP POSITION~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     void clbk_cup_abs_position(const geometry_msgs::msg::Point::SharedPtr msg) {
@@ -90,58 +179,106 @@ public:
     void handle_service(const std::shared_ptr<CoffeeService::Request> request, std::shared_ptr<CoffeeService::Response> response) {
         RCLCPP_INFO(SERVICE, "COFFEE - Received request with bool value: %s", request->coffe_order ? "true" : "false");
 
-        if(request->coffe_order) {
-            move_gripper_space(-0.17);
+        if(request->coffe_order) 
+        {
             RCLCPP_INFO(SERVICE, "COFFEE - Executing goal");
-            
-            send_feedback("COFFEE -> STAGE 1!");
-            send_feedback("COFFEE -> Moving to crab position");
-            // cmd_arm("crab_pose");
-            move_joint_space(-0.000045, -2.144726, 1.697500, -1.123655, -1.570612, -1.570653);
-            send_feedback("COFFEE -> Moving to x=0.31");
-            move2pos(0.31, "x");
-            send_feedback("COFFEE -> Moving to y=0.34");
-            move2pos(0.34, "y");
-            send_feedback("COFFEE -> Opening gripper");
-            cmd_gripper("gripper_open");
-            print_end_effector_position();
+            if(get_is_robot_sim()) {
+                RCLCPP_INFO(SERVICE, "\n\n\n Robot is simulated \n\n\n");
+                move_gripper_space(-0.17);
+                send_feedback("COFFEE -> STAGE 1!");
+                send_feedback("COFFEE -> Moving to crab position");
+                // cmd_arm("crab_pose");
+                move_joint_space(-0.000045, -2.144726, 1.697500, -1.123655, -1.570612, -1.570653);
+                send_feedback("COFFEE -> Moving to x=0.31");
+                move2pos(0.31, "x");
+                send_feedback("COFFEE -> Moving to y=0.34");
+                move2pos(0.34, "y");
+                send_feedback("COFFEE -> Opening gripper");
+                cmd_gripper("gripper_open");
+                print_end_effector_position();
 
-            send_feedback("COFFEE -> STAGE 2!");
-            send_feedback("COFFEE -> Moving to z=0.26");
-            move2pos(0.26, "z");
-            send_feedback("COFFEE -> Closing gripper");
-            move_gripper_space(-0.17);
-            send_feedback("COFFEE -> Moving to z=0.35");
-            move2pos(0.35, "z");
-            send_feedback("COFFEE -> Moving to shoulder_pan_joint=135.0");
-            move_single_joint("shoulder_pan_joint", 135.0);
+                send_feedback("COFFEE -> STAGE 2!");
+                send_feedback("COFFEE -> Moving to z=0.26");
+                move2pos(0.26, "z");
+                send_feedback("COFFEE -> Closing gripper");
+                move_gripper_space(-0.17);
+                send_feedback("COFFEE -> Moving to z=0.35");
+                move2pos(0.35, "z");
+                send_feedback("COFFEE -> Moving to shoulder_pan_joint=135.0");
+                move_single_joint("shoulder_pan_joint", 135.0);
 
-            send_feedback("COFFEE -> STAGE 3!");
-            std::string cube_pos_x_str = std::to_string(cube_pos_x_).substr(0, std::to_string(cube_pos_x_).find(".") + 4);
-            std::string cube_pos_y_str = std::to_string(cube_pos_y_).substr(0, std::to_string(cube_pos_y_).find(".") + 4);
-            std::string cube_pos_z_str = std::to_string(cube_pos_z_).substr(0, std::to_string(cube_pos_z_).find(".") + 4);
-            send_feedback("COFFEE -> Delivering to point (" + cube_pos_x_str + ", " + cube_pos_y_str + ", " + cube_pos_z_str + ")");
-            send_feedback("COFFEE -> Moving to y=cube_pos_y_");
-            move2pos(cube_pos_y_, "y");
-            send_feedback("COFFEE -> Moving to z=cube_pos_z_+0.33");
-            move2pos(cube_pos_z_+0.33, "z");
-            send_feedback("COFFEE -> Moving to x=cube_pos_x_");
-            move2pos(cube_pos_x_, "x");
-            send_feedback("COFFEE -> Opening gripper");
-            cmd_gripper("gripper_open");
-            print_end_effector_position();
-            
-            if (rclcpp::ok()) {
-                response->order_success = true;
-                RCLCPP_INFO(SERVICE, "COFFEE - Order succeeded\n");
+                send_feedback("COFFEE -> STAGE 3!");
+                std::string cube_pos_x_str = std::to_string(cube_pos_x_).substr(0, std::to_string(cube_pos_x_).find(".") + 4);
+                std::string cube_pos_y_str = std::to_string(cube_pos_y_).substr(0, std::to_string(cube_pos_y_).find(".") + 4);
+                std::string cube_pos_z_str = std::to_string(cube_pos_z_).substr(0, std::to_string(cube_pos_z_).find(".") + 4);
+                send_feedback("COFFEE -> Delivering to point (" + cube_pos_x_str + ", " + cube_pos_y_str + ", " + cube_pos_z_str + ")");
+                send_feedback("COFFEE -> Moving to y=cube_pos_y_");
+                move2pos(cube_pos_y_, "y");
+                send_feedback("COFFEE -> Moving to z=cube_pos_z_+0.33");
+                move2pos(cube_pos_z_+0.33, "z");
+                send_feedback("COFFEE -> Moving to x=cube_pos_x_");
+                move2pos(cube_pos_x_, "x");
+                send_feedback("COFFEE -> Opening gripper");
+                cmd_gripper("gripper_open");
+                print_end_effector_position();
+                
+                if (rclcpp::ok()) {
+                    response->order_success = true;
+                    RCLCPP_INFO(SERVICE, "COFFEE - Order succeeded\n");
+                }
+                cmd_arm("home");
+            } 
+            else {
+                RCLCPP_INFO(SERVICE, "\n\n\n Robot is real \n\n\n");
+                move_gripper_space(0.0);
+                send_feedback("COFFEE -> STAGE 1!");
+                send_feedback("COFFEE -> Moving to crab position");
+                cmd_arm("crab_pose");
+                // move_joint_space(-0.000045, -2.144726, 1.697500, -1.123655, -1.570612, -1.570653);
+                send_feedback("COFFEE -> Moving to x=0.21");
+                move2pos(0.21, "x");
+                send_feedback("COFFEE -> Moving to y=0.34");
+                move2pos(0.34, "y");
+                send_feedback("COFFEE -> Opening gripper");
+                cmd_gripper("gripper_open");
+                print_end_effector_position();
+
+                send_feedback("COFFEE -> STAGE 2!");
+                send_feedback("COFFEE -> Moving to z=0.28");
+                move2pos(0.28, "z");
+                send_feedback("COFFEE -> Closing gripper");
+                move_gripper_space(0.0);
+                send_feedback("COFFEE -> Moving to z=0.35");
+                move2pos(0.35, "z");
+                send_feedback("COFFEE -> Moving to shoulder_pan_joint=135.0");
+                move_single_joint("shoulder_pan_joint", 135.0);
+
+                send_feedback("COFFEE -> STAGE 3!");
+                std::string cube_pos_x_str = std::to_string(cube_pos_x_).substr(0, std::to_string(cube_pos_x_).find(".") + 4);
+                std::string cube_pos_y_str = std::to_string(cube_pos_y_).substr(0, std::to_string(cube_pos_y_).find(".") + 4);
+                std::string cube_pos_z_str = std::to_string(cube_pos_z_).substr(0, std::to_string(cube_pos_z_).find(".") + 4);
+                send_feedback("COFFEE -> Delivering to point (" + cube_pos_x_str + ", " + cube_pos_y_str + ", " + cube_pos_z_str + ")");
+                send_feedback("COFFEE -> Moving to y=cube_pos_y_");
+                move2pos(cube_pos_y_, "y");
+                send_feedback("COFFEE -> Moving to z=cube_pos_z_+0.33");
+                move2pos(cube_pos_z_+0.33, "z");
+                send_feedback("COFFEE -> Moving to x=cube_pos_x_");
+                move2pos(cube_pos_x_, "x");
+                send_feedback("COFFEE -> Opening gripper");
+                cmd_gripper("gripper_open");
+                print_end_effector_position();
+                
+                if (rclcpp::ok()) {
+                    response->order_success = true;
+                    RCLCPP_INFO(SERVICE, "COFFEE - Order succeeded\n");
+                }
+                cmd_arm("home");
             }
-            cmd_arm("home");
         }
         else
         {
             response->order_success = false;
         }
-        
     }
 
     void send_feedback(const std::string& feedback) {

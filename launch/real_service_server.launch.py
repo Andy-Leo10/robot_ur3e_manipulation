@@ -18,9 +18,9 @@ def generate_launch_description():
 
     # MoveItCpp demo executable
     moveit_cpp_node = Node(
-        name="ur3e_pick_and_placer_node",
+        name="ur3e_service_server_node",
         package="robot_ur3e_manipulation",
-        executable="pick_and_place_advanced",
+        executable="service_server",
         output="screen",
         parameters=[
             moveit_config.robot_description,
