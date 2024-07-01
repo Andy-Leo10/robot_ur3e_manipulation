@@ -201,7 +201,8 @@ public:
                 send_feedback("COFFEE -> Moving to z=0.26");
                 move2pos(0.26, "z");
                 send_feedback("COFFEE -> Closing gripper");
-                move_gripper_space(-0.17);
+                //move_gripper_space(-0.17);
+                cmd_gripper("gripper_close");
                 send_feedback("COFFEE -> Moving to z=0.35");
                 move2pos(0.35, "z");
                 send_feedback("COFFEE -> Moving to shoulder_pan_joint=135.0");
@@ -261,7 +262,7 @@ public:
                 send_feedback("COFFEE -> Moving to y=cube_pos_y_");
                 move2pos(cube_pos_y_, "y");
                 send_feedback("COFFEE -> Moving to z=cube_pos_z_+0.33");
-                move2pos(cube_pos_z_+0.33, "z");
+                move2pos(cube_pos_z_+0.40, "z");
                 send_feedback("COFFEE -> Moving to x=cube_pos_x_");
                 move2pos(cube_pos_x_, "x");
                 send_feedback("COFFEE -> Opening gripper");
