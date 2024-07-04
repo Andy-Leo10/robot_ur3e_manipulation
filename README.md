@@ -1,5 +1,9 @@
 # robot_ur3e_manipulation
 
+```
+git clone https://github.com/Andy-Leo10/robot_ur3e_manipulation.git
+```
+
 - [robot\_ur3e\_manipulation](#robot_ur3e_manipulation)
 - [SIMULATED ROBOT](#simulated-robot)
   - [Service version](#service-version)
@@ -10,6 +14,8 @@
   - [Service version](#service-version-1)
   - [Action version](#action-version-1)
   - [Advanced version](#advanced-version-1)
+
+---
 
 <details>
 <summary><b>SIMULATED ROBOT</b></summary>
@@ -46,7 +52,7 @@ cd ~/ros2_ws/; colcon build --packages-select robot_ur3e_manipulation; source in
 
 ---
 
-<details open>
+<details>
 <summary><b>REAL ROBOT</b></summary>
 
 # REAL ROBOT
@@ -73,3 +79,5 @@ ros2 action send_goal /robot_ur3e_manipulation_as robot_ur3e_manipulation/action
 cd ~/ros2_ws/; colcon build --packages-select robot_ur3e_manipulation; source install/setup.bash; ros2 launch robot_ur3e_manipulation real_pick_and_place_advanced.launch.py
 ```
 </details>
+
+---
