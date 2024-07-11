@@ -1,0 +1,17 @@
+/scaled_joint_trajectory_controller:
+  ros__parameters:
+    constraints:
+      elbow_joint:
+        goal: 0.01
+      shoulder_lift_joint:
+        goal: 0.01
+      shoulder_pan_joint:
+        goal: 0.01
+      wrist_1_joint:
+        goal: 0.01
+      wrist_2_joint:
+        goal: 0.01
+      wrist_3_joint:
+        goal: 0.01
+
+# ros2 param load /scaled_joint_trajectory_controller /home/user/ros2_ws/src/coffee-dispenser-project/robot_ur3e_manipulation/params/goal_precision_real.yaml

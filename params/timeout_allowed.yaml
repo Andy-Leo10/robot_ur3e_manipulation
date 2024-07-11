@@ -1,0 +1,6 @@
+/moveit_simple_controller_manager:
+  ros__parameters:
+    trajectory_execution:
+      allowed_execution_duration_scaling: 10.0
+
+# ros2 param load /moveit_simple_controller_manager /home/user/ros2_ws/src/coffee-dispenser-project/robot_ur3e_manipulation/params/timeout_allowed.yaml
