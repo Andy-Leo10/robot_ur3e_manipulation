@@ -217,38 +217,53 @@ public:
             feedback->order_status = "COFFEE -> Moving to crab position"; goal_handle->publish_feedback(feedback);
             cmd_arm("crab_pose");
             // move_joint_space(-0.000045, -2.144726, 1.697500, -1.123655, -1.570612, -1.570653);
-            feedback->order_status = "COFFEE -> Moving to x=0.31"; goal_handle->publish_feedback(feedback);
-            move2pos(0.31, "x");
-            feedback->order_status = "COFFEE -> Moving to y=0.34"; goal_handle->publish_feedback(feedback);
-            move2pos(0.34, "y");
+            
+            // feedback->order_status = "COFFEE -> Moving to x=0.31"; goal_handle->publish_feedback(feedback);
+            // move2pos(0.31, "x");
+            // feedback->order_status = "COFFEE -> Moving to y=0.34"; goal_handle->publish_feedback(feedback);
+            // move2pos(0.34, "y");
+            feedback->order_status = "COFFEE -> Moving to x=0.31 y=0.34 z=0.35"; goal_handle->publish_feedback(feedback);
+            move_with_orientation_constraint(0.31, 0.34, 0.35);
             feedback->order_status = "COFFEE -> Opening gripper"; goal_handle->publish_feedback(feedback);
             cmd_gripper("gripper_open");
             print_end_effector_position();
 
             feedback->order_status = "COFFEE -> STAGE 2!"; goal_handle->publish_feedback(feedback);
+            // feedback->order_status = "COFFEE -> Moving to x=0.31 y=0.34 z=0.26"; goal_handle->publish_feedback(feedback);
+            // move_with_orientation_constraint(0.31, 0.34, 0.26);            
             feedback->order_status = "COFFEE -> Moving to z=0.26"; goal_handle->publish_feedback(feedback);
-            move2pos(0.26, "z");
+            move2pos(0.26, "z");            
             feedback->order_status = "COFFEE -> Closing gripper"; goal_handle->publish_feedback(feedback);
-            move_gripper_space(-0.17);
+            // move_gripper_space(-0.17);
+            cmd_gripper("gripper_close");
+            // feedback->order_status = "COFFEE -> Moving to x=0.31 y=0.34 z=0.35"; goal_handle->publish_feedback(feedback);
+            // move_with_orientation_constraint(0.31, 0.34, 0.35);            
             feedback->order_status = "COFFEE -> Moving to z=0.35"; goal_handle->publish_feedback(feedback);
-            move2pos(0.35, "z");
+            move2pos(0.35, "z");            
             feedback->order_status = "COFFEE -> Moving to shoulder_pan_joint=135.0"; goal_handle->publish_feedback(feedback);
             move_single_joint("shoulder_pan_joint", 135.0);
 
+            float cup_pos_x, cup_pos_y, cup_pos_z;
+            std::tie(cup_pos_x, cup_pos_y, cup_pos_z) = get_cup_position();
             feedback->order_status = "COFFEE -> STAGE 3!"; goal_handle->publish_feedback(feedback);
-            std::string cube_pos_x_str = std::to_string(cube_pos_x_).substr(0, std::to_string(cube_pos_x_).find(".") + 4);
-            std::string cube_pos_y_str = std::to_string(cube_pos_y_).substr(0, std::to_string(cube_pos_y_).find(".") + 4);
-            std::string cube_pos_z_str = std::to_string(cube_pos_z_).substr(0, std::to_string(cube_pos_z_).find(".") + 4);
+            std::string cube_pos_x_str = std::to_string(cup_pos_x-0.015).substr(0, std::to_string(cup_pos_x-0.015).find(".") + 4);
+            std::string cube_pos_y_str = std::to_string(cup_pos_y).substr(0, std::to_string(cup_pos_y).find(".") + 4);
+            std::string cube_pos_z_str = std::to_string(cup_pos_z+0.30).substr(0, std::to_string(cup_pos_z+0.30).find(".") + 4);
             feedback->order_status = "COFFEE -> Delivering to point (" + cube_pos_x_str + ", " + cube_pos_y_str + ", " + cube_pos_z_str + ")"; goal_handle->publish_feedback(feedback);
-            feedback->order_status = "COFFEE -> Moving to y=cube_pos_y_"; goal_handle->publish_feedback(feedback);
-            move2pos(cube_pos_y_, "y");
-            feedback->order_status = "COFFEE -> Moving to z=cube_pos_z_+0.33"; goal_handle->publish_feedback(feedback);
-            move2pos(cube_pos_z_+0.33, "z");
-            feedback->order_status = "COFFEE -> Moving to x=cube_pos_x_"; goal_handle->publish_feedback(feedback);
-            move2pos(cube_pos_x_, "x");
-            feedback->order_status = "COFFEE -> Opening gripper"; goal_handle->publish_feedback(feedback);
-            cmd_gripper("gripper_open");
+            RCLCPP_INFO(ACTION, "COFFEE - Delivering to point (%s, %s, %s)", cube_pos_x_str.c_str(), cube_pos_y_str.c_str(), cube_pos_z_str.c_str());
+            move_with_orientation_constraint(cup_pos_x-0.015, cup_pos_y, cup_pos_z+0.30);
             print_end_effector_position();
+            move_with_orientation_constraint(cup_pos_x-0.015, cup_pos_y, cup_pos_z+0.27);            
+            // feedback->order_status = "COFFEE -> Moving to y=cup_pos_y"; goal_handle->publish_feedback(feedback);
+            // move2pos(cup_pos_y, "y");
+            // feedback->order_status = "COFFEE -> Moving to z=cup_pos_z+0.33"; goal_handle->publish_feedback(feedback);
+            // move2pos(cup_pos_z+0.33, "z");
+            // feedback->order_status = "COFFEE -> Moving to x=cup_pos_x"; goal_handle->publish_feedback(feedback);
+            // move2pos(cup_pos_x, "x");
+            feedback->order_status = "COFFEE -> Opening gripper"; goal_handle->publish_feedback(feedback);
+            move_gripper_space(0.4);
+            cmd_gripper("gripper_open");
+            move_with_orientation_constraint(cup_pos_x-0.015, cup_pos_y, cup_pos_z+0.30);
 
             // Check if goal is succeeded or aborted
             if (rclcpp::ok()) {
@@ -265,38 +280,51 @@ public:
             feedback->order_status = "COFFEE -> Moving to crab position"; goal_handle->publish_feedback(feedback);
             cmd_arm("crab_pose");
             // move_joint_space(-0.000045, -2.144726, 1.697500, -1.123655, -1.570612, -1.570653);
-            feedback->order_status = "COFFEE -> Moving to x=0.21"; goal_handle->publish_feedback(feedback);
-            move2pos(0.21, "x");
-            feedback->order_status = "COFFEE -> Moving to y=0.34"; goal_handle->publish_feedback(feedback);
-            move2pos(0.34, "y");
+            
+            // feedback->order_status = "COFFEE -> Moving to x=0.21"; goal_handle->publish_feedback(feedback);
+            // move2pos(0.21, "x");
+            // feedback->order_status = "COFFEE -> Moving to y=0.34"; goal_handle->publish_feedback(feedback);
+            // move2pos(0.34, "y");
+            feedback->order_status = "COFFEE -> Moving to x=0.21 y=0.34 z=0.35"; goal_handle->publish_feedback(feedback);
+            move_with_orientation_constraint(0.21, 0.34, 0.35);
             feedback->order_status = "COFFEE -> Opening gripper"; goal_handle->publish_feedback(feedback);
             cmd_gripper("gripper_open");
             print_end_effector_position();
 
             feedback->order_status = "COFFEE -> STAGE 2!"; goal_handle->publish_feedback(feedback);
-            feedback->order_status = "COFFEE -> Moving to z=0.28"; goal_handle->publish_feedback(feedback);
-            move2pos(0.28, "z");
+            feedback->order_status = "COFFEE -> Moving to x=0.21 y=0.34 z=0.28"; goal_handle->publish_feedback(feedback);
+            move_with_orientation_constraint(0.21, 0.34, 0.28);
+            // feedback->order_status = "COFFEE -> Moving to z=0.28"; goal_handle->publish_feedback(feedback);
+            // move2pos(0.28, "z");            
             feedback->order_status = "COFFEE -> Closing gripper"; goal_handle->publish_feedback(feedback);
             move_gripper_space(0.0);
-            feedback->order_status = "COFFEE -> Moving to z=0.35"; goal_handle->publish_feedback(feedback);
-            move2pos(0.35, "z");
+            feedback->order_status = "COFFEE -> Moving to x=0.21 y=0.34 z=0.35"; goal_handle->publish_feedback(feedback);
+            move_with_orientation_constraint(0.21, 0.34, 0.35);
+            // feedback->order_status = "COFFEE -> Moving to z=0.35"; goal_handle->publish_feedback(feedback);
+            // move2pos(0.35, "z");
             feedback->order_status = "COFFEE -> Moving to shoulder_pan_joint=135.0"; goal_handle->publish_feedback(feedback);
             move_single_joint("shoulder_pan_joint", 135.0);
 
+            float cup_pos_x, cup_pos_y, cup_pos_z;
+            std::tie(cup_pos_x, cup_pos_y, cup_pos_z) = get_cup_position();
             feedback->order_status = "COFFEE -> STAGE 3!"; goal_handle->publish_feedback(feedback);
-            std::string cube_pos_x_str = std::to_string(cube_pos_x_).substr(0, std::to_string(cube_pos_x_).find(".") + 4);
-            std::string cube_pos_y_str = std::to_string(cube_pos_y_).substr(0, std::to_string(cube_pos_y_).find(".") + 4);
-            std::string cube_pos_z_str = std::to_string(cube_pos_z_).substr(0, std::to_string(cube_pos_z_).find(".") + 4);
+            std::string cube_pos_x_str = std::to_string(cup_pos_x).substr(0, std::to_string(cup_pos_x).find(".") + 4);
+            std::string cube_pos_y_str = std::to_string(cup_pos_y).substr(0, std::to_string(cup_pos_y).find(".") + 4);
+            std::string cube_pos_z_str = std::to_string(cup_pos_z+0.33).substr(0, std::to_string(cup_pos_z+0.33).find(".") + 4);
             feedback->order_status = "COFFEE -> Delivering to point (" + cube_pos_x_str + ", " + cube_pos_y_str + ", " + cube_pos_z_str + ")"; goal_handle->publish_feedback(feedback);
-            feedback->order_status = "COFFEE -> Moving to y=cube_pos_y_"; goal_handle->publish_feedback(feedback);
-            move2pos(cube_pos_y_, "y");
-            feedback->order_status = "COFFEE -> Moving to z=cube_pos_z_+0.33"; goal_handle->publish_feedback(feedback);
-            move2pos(cube_pos_z_+0.33, "z");
-            feedback->order_status = "COFFEE -> Moving to x=cube_pos_x_"; goal_handle->publish_feedback(feedback);
-            move2pos(cube_pos_x_, "x");
+            RCLCPP_INFO(ACTION, "COFFEE - Delivering to point (%.3f, %.3f, %.3f)", cup_pos_x, cup_pos_y, cup_pos_z+0.33);
+            move_with_orientation_constraint(cup_pos_x, cup_pos_y, cup_pos_z+0.33);
+            print_end_effector_position();
+            move_with_orientation_constraint(cup_pos_x, cup_pos_y, cup_pos_z+0.30);
+            // feedback->order_status = "COFFEE -> Moving to y=cup_pos_y"; goal_handle->publish_feedback(feedback);
+            // move2pos(cup_pos_y, "y");
+            // feedback->order_status = "COFFEE -> Moving to z=cup_pos_z+0.33"; goal_handle->publish_feedback(feedback);
+            // move2pos(cup_pos_z+0.33, "z");
+            // feedback->order_status = "COFFEE -> Moving to x=cup_pos_x"; goal_handle->publish_feedback(feedback);
+            // move2pos(cup_pos_x, "x");
             feedback->order_status = "COFFEE -> Opening gripper"; goal_handle->publish_feedback(feedback);
             cmd_gripper("gripper_open");
-            print_end_effector_position();
+            move_with_orientation_constraint(cup_pos_x, cup_pos_y, cup_pos_z+0.33);
 
             // Check if goal is succeeded or aborted
             if (rclcpp::ok()) {
@@ -475,6 +503,43 @@ public:
     }
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PROs~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    void move_with_orientation_constraint(double x, double y, double z) {
+        moveit_msgs::msg::OrientationConstraint ocm; // create an orientation constraint message
+        ocm.link_name = "hand_ee";
+        ocm.header.frame_id = "base_link";
+        ocm.orientation.x = 1.0;
+        ocm.orientation.y = 0.0;
+        ocm.orientation.z = 0.0;
+        ocm.orientation.w = 0.0;
+        ocm.absolute_x_axis_tolerance = 0.05;
+        ocm.absolute_y_axis_tolerance = 0.05;
+        ocm.absolute_z_axis_tolerance = 0.05;
+        ocm.weight = 1.0;                          // set the importance
+        moveit_msgs::msg::Constraints constraints; // create a constraint message
+        constraints.orientation_constraints.push_back(ocm); // add the orientation constraint to the constraint message
+        RCLCPP_INFO(LOGGER, "---------------------------MOVE WITH ORIENTATION "
+                            "CONSTRAINT!----------------------------------");
+
+        std::vector<geometry_msgs::msg::Pose> waypoints;
+        geometry_msgs::msg::Pose target_pose = move_group_arm->getCurrentPose().pose;
+        target_pose.position.x = x;
+        target_pose.position.y = y;
+        target_pose.position.z = z;
+        waypoints.push_back(target_pose);
+
+        moveit_msgs::msg::RobotTrajectory trajectory;
+        const double jump_threshold = 0.0;
+        const double eef_step = 0.01;
+        double fraction = move_group_arm->computeCartesianPath(
+            waypoints, eef_step, jump_threshold, trajectory, constraints);
+
+        if (fraction >= 0.0) {
+            move_group_arm->execute(trajectory);
+        } else {
+            RCLCPP_ERROR(LOGGER, "Waypoint movement plan failed!");
+        }
+    }    
 
     void move2pos(double absolute_coord, const std::string& axis) {
         RCLCPP_INFO(LOGGER, "---------------------------MOVE 2 POS %s!----------------------------------", axis.c_str());
